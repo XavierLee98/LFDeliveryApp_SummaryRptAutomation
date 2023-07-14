@@ -12,6 +12,9 @@ namespace SummaryRptAutomation.Model
 
         public string CompanyID { get; set; }
 
+        public string TruckNum { get; set; }
+        public string DriverCode { get; set; }
+
         public Guid Guid { get; set; }
 
         public string DocType { get; set; }

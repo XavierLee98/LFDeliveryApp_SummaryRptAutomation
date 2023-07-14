@@ -78,7 +78,7 @@ namespace SummaryRptAutomation.Helper
                         default:
                             {
                                 Log($"Request {x.Guid} DocType {x.DocType} is not found.");
-                                UpdateFailed(x.Guid);
+                                UpdateFailed(x.Guid, $"Request {x.Guid} DocType {x.DocType} is not found.");
                                 break;
                             }
                     }
@@ -118,7 +118,7 @@ namespace SummaryRptAutomation.Helper
             catch (Exception e)
             {
                 Log($"Payment Summary Report {request.Guid} fail.\n{e.Message}\n{ e.StackTrace}");
-                UpdateFailed(request.Guid);
+                UpdateFailed(request.Guid, $"{e.Message}");
             }
         }
 
@@ -141,6 +141,15 @@ namespace SummaryRptAutomation.Helper
                 report.SetParameterValue("Status@", request.Status);
                 report.SetParameterValue("StartDate@", request.StartDate);
                 report.SetParameterValue("EndDate@", request.EndDate);
+                if(!string.IsNullOrEmpty(request.DriverCode))
+                    report.SetParameterValue("Driver@", request.DriverCode);
+                else
+                    report.SetParameterValue("Driver@", "");
+
+                if (!string.IsNullOrEmpty(request.TruckNum))
+                    report.SetParameterValue("Truck@", request.TruckNum);
+                else
+                    report.SetParameterValue("Truck@", "");
 
                 report.SaveAsPdf(destinationpath);
                 report.Close();
@@ -151,7 +160,7 @@ namespace SummaryRptAutomation.Helper
             catch (Exception e)
             {
                 Log($"Invoice Summary Report {request.Guid} fail.\n{e.Message}\n{ e.StackTrace}");
-                UpdateFailed(request.Guid);
+                UpdateFailed(request.Guid, $"{e.Message}");
             }
         }
 
@@ -233,15 +242,15 @@ namespace SummaryRptAutomation.Helper
             }
         }
 
-        static void UpdateFailed(Guid docGuid)
+        static void UpdateFailed(Guid docGuid, string errmsg)
         {
             try
             {
                 var conn = new SqlConnection(DbConnectString_Midware);
 
-                var query = "UPDATE SummaryRequest SET IsTry= IsTry + 1 WHERE Guid = @Guid";
+                var query = "UPDATE SummaryRequest SET IsTry= IsTry + 1, LastErrorMsg = @LastErrorMsg WHERE Guid = @Guid";
 
-                conn.Execute(query, new { Guid = docGuid });
+                conn.Execute(query, new { Guid = docGuid, LastErrorMsg = errmsg });
             }
             catch (Exception e)
             {
